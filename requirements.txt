@@ -1,0 +1,16 @@
+streamlit
+streamlit-webrtc
+streamlit-option-menu
+streamlit-chat
+langchain
+openai
+PyPDF2
+faiss-cpu
+tiktoken
+pydub
+SpeechRecognition
+gTTS
+nltk
+numpy
+python-dotenv
+scipy

@@ -1,0 +1,11 @@
+# Ignore virtual environments
+.venv/
+env/
+
+# Ignore Python compiled files
+*.pyc
+__pycache__/
+
+# Ignore IDE project files
+.vscode/
+*.sublime-workspace
