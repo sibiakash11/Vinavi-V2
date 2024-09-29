@@ -1,16 +1,29 @@
+# Web Framework
 streamlit
 streamlit-webrtc
 streamlit-option-menu
 streamlit-chat
+streamlit-mic-recorder  # Added as you used `speech_to_text` from this package
+
+# Langchain and related tools
 langchain
 openai
+tiktoken
 PyPDF2
 faiss-cpu
-tiktoken
-pydub
-SpeechRecognition
-gTTS
+langchain-community  # Required for `langchain_community.vectorstores` imports
+faiss-cpu
+
+# Vector stores and embeddings
+numpy  # Required for FAISS usage
+scipy  # FAISS also relies on scipy for various operations
+nltk  # Language toolkit for text preprocessing
+python-dotenv  # To manage environment variables
+
+# Speech and Audio Processing
+pydub  # Audio file handling
+SpeechRecognition  # Speech recognition library
+gTTS  # Google Text-to-Speech
+
+# Language Models
 nltk
-numpy
-python-dotenv
-scipy
