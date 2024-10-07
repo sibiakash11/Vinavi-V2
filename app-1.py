@@ -105,8 +105,8 @@ st.markdown(
     unsafe_allow_html=True
 )
 st.markdown(
-    "<p style='text-align: center;'>9 வயது குழந்தைகளுக்கான தமிழ் துணைவர். "
-    "தமிழ் புத்தகத்துடன் தொடர்புடைய எந்த கேள்வியையும் கேளுங்கள்.</p>",
+    "<p style='text-align: center;'> "
+    "தமிழ் தொடர்புடைய எந்த கேள்வியையும் கேளுங்கள்.</p>",
     unsafe_allow_html=True
 )
 
@@ -166,9 +166,9 @@ if 'prev_mode' not in st.session_state:
 # Sidebar: Mode Selection and Overall Chat History
 with st.sidebar:
     st.write("## முறை தேர்ந்தெடுக்கவும் (Select Mode)")
-    mode = st.selectbox(
+    mode = st.radio(
         "",
-        ("தமிழ் உதவி (Tamil Udhavi)", "கருத்தறிதல் (Karutharithal)", "நிரப்புக (Nirappug)", "விரிவாக (Virivaaga)"),
+        ("தமிழ் பயிற்சி", "கருத்தறிதல் பயிற்சி", "நிரப்புக பயிற்சி", "விரிவாக"),
         disabled=st.session_state['is_processing']
     )
 
@@ -266,46 +266,52 @@ def autoplay_audio(text):
     components.html(html_string, height=60)
 
 # Mode-specific handling
-if mode == "கருத்தறிதல் (Karutharithal)":
+if mode == "கருத்தறிதல் பயிற்சி":
+# Mode-specific handling
 
-# Function to reset Karutharithal session state
- def reset_karutharithal_session():
-    st.session_state['karutharithal_started'] = False
-    st.session_state['karutharithal_exercise'] = None
-    st.session_state['melum_kooru_messages'] = []
-    st.session_state['messages'] = []
-    st.session_state['exercise_feedback'] = ''
-    st.session_state['user_answers'] = []
-    st.session_state['is_processing'] = False
+    # Function to reset Karutharithal session state
+    def reset_karutharithal_session():
+        st.session_state['karutharithal_started'] = False
+        st.session_state['karutharithal_exercise'] = None
+        st.session_state['melum_kooru_messages'] = []
+        st.session_state['messages'] = []
+        st.session_state['exercise_feedback'] = ''
+        st.session_state['user_answers'] = []
+        st.session_state['is_processing'] = False
 
-# Callback function for starting Karutharithal exercise
- def start_karutharithal():
-    try:
-        with st.spinner("பயிற்சி தயாராகிறது..."):
-            exercise = generate_karutharithal_exercise(api_key)
-            # Check if exercise has non-empty passage and questions
-            if not exercise.get('passage') or not exercise.get('questions'):
-                raise ValueError("பகுதி அல்லது கேள்விகள் காலியாக உள்ளன. தயவுசெய்து மீண்டும் முயற்சிக்கவும்.")
-            st.session_state['karutharithal_exercise'] = exercise
-            st.session_state['karutharithal_started'] = True
-    except ValueError as e:
-        st.error(str(e))
-        # Reset the session state to initial state
-        reset_karutharithal_session()
-        st.stop()  # Stop further execution to re-render the page
-    except Exception as e:
-        st.error(f"பயிற்சி தயாரிப்பதில் ஒரு பிழை ஏற்பட்டது: {str(e)}")
-        # Reset the session state to initial state
-        reset_karutharithal_session()
-        st.stop()
- if not st.session_state['karutharithal_started']:
-        st.write("சரி, கருத்தறிதல் பயிற்சியை தொடங்குவோம். பயிற்சியை தொடங்க 'தொடங்கு' பொத்தானைக் கிளிக் செய்யவும்.")
+    # Callback function for starting Karutharithal exercise
+    def start_karutharithal():
+        try:
+            with st.spinner("பயிற்சி தயாராகிறது..."):
+                exercise = generate_karutharithal_exercise(api_key)
+                # Check if exercise has non-empty passage and questions
+                if not exercise.get('passage') or not exercise.get('questions'):
+                    raise ValueError("பகுதி அல்லது கேள்விகள் காலியாக உள்ளன. தயவுசெய்து மீண்டும் முயற்சிக்கவும்.")
+                st.session_state['karutharithal_exercise'] = exercise
+                st.session_state['karutharithal_started'] = True
+        except ValueError as e:
+            #st.error(str(e))
+            # Reset the session state to initial state
+            reset_karutharithal_session()
+            st.stop()  # Stop further execution to re-render the page
+        except Exception as e:
+            st.error(f"பயிற்சி தயாரிப்பதில் ஒரு பிழை ஏற்பட்டது: {str(e)}")
+            # Reset the session state to initial state
+            reset_karutharithal_session()
+            st.stop()
+
+    if not st.session_state['karutharithal_started']:
+     
+        st.markdown(
+    "<p style='text-align: center;'>கருத்தறிதல் பயிற்சியை தொடங்குவோம். பயிற்சியை தொடங்க 'தொடங்கு' பொத்தானை அழுத்தவும்.</p>",
+    unsafe_allow_html=True
+)
         
         # Center the "தொடங்கு" button using columns
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             st.button("தொடங்கு", key='karutharithal_start_btn', on_click=start_karutharithal)
- else:
+    else:
         try:
             passage = st.session_state['karutharithal_exercise']['passage']
             questions = st.session_state['karutharithal_exercise']['questions']
@@ -325,13 +331,33 @@ if mode == "கருத்தறிதல் (Karutharithal)":
         for idx, question in enumerate(questions):
             st.write(f"{idx+1}. {question}")
         
-        # Input fields for answers
         st.write("### உங்கள் பதில்கள்:")
         user_answers = []
         for idx in range(len(questions)):
-            user_answer = st.text_input(f"பதில் {idx+1}", key=f'karutharithal_answer_{idx}')
+    # Text input first, then mic button next to it
+            input_col, mic_col = st.columns([5, 1])  # Input column first, then mic
+    
+            with mic_col:
+                mic_key = f'STT_karutharithal_{idx}'
+                tamil_text = speech_to_text(
+                    language='ta-IN',
+                    start_prompt="🎤",
+                    stop_prompt="🛑",
+                    key=mic_key
+                )
+                if tamil_text:
+                    st.session_state[f'karutharithal_temp_answer_{idx}'] = tamil_text  # Store in temporary state
+            
+            
+            with input_col:
+                user_answer = st.text_input(
+                    f"பதில் {idx+1}",
+                    value=st.session_state.get(f'karutharithal_temp_answer_{idx}', ''),
+                    key=f'karutharithal_answer_{idx}'
+                )
+
             user_answers.append(user_answer)
-        
+
         # Button to submit answers
         if st.button("பதில்கள் அனுப்பவும்", key='karutharithal_submit_btn'):
             # Validate the answers
@@ -358,17 +384,19 @@ if mode == "கருத்தறிதல் (Karutharithal)":
                     )
                     st.session_state['exercise_feedback'] = feedback
                 st.session_state['is_processing'] = False
+        
         # Display feedback
         if st.session_state['exercise_feedback']:
             st.write("### மதிப்பாய்வு:")
             st.write(st.session_state['exercise_feedback'])
-            # Center the "புதிய பயிற்சி" button using columns
-            col1, col2, col3 = st.columns([1, 2, 1])
-            with col2:
-                st.button("புதிய பயிற்சி", key='karutharithal_new_exercise_btn', on_click=reset_karutharithal_session)
 
+        # Reset button to restart the exercise
+        st.write("")
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.button("புதிய பயிற்சி", key=f'karutharithal_new_exercise_btn_{st.session_state["karutharithal_started"]}', on_click=reset_karutharithal_session)
 
-elif mode == "நிரப்புக (Nirappug)":
+elif mode == "நிரப்புக பயிற்சி":
     # Function to reset Nirappug session state
     def reset_nirappug_session():
         st.session_state['nirappugaa_started'] = False
@@ -379,7 +407,7 @@ elif mode == "நிரப்புக (Nirappug)":
         st.session_state['user_answers'] = []
         st.session_state['is_processing'] = False
 
-# Callback function for starting Nirappug exercise
+    # Callback function for starting Nirappug exercise
     def start_nirappugaa():
         try:
             with st.spinner("பயிற்சி தயாராகிறது..."):
@@ -390,26 +418,37 @@ elif mode == "நிரப்புக (Nirappug)":
                 st.session_state['nirappugaa_exercise'] = exercise
                 st.session_state['nirappugaa_started'] = True
         except ValueError as e:
-            st.error(str(e))
+            #st.error(str(e))
             reset_nirappug_session()
         except Exception as e:
             st.error(f"பயிற்சி தயாரிப்பதில் ஒரு பிழை ஏற்பட்டது: {str(e)}")
             reset_nirappug_session()
 
     if not st.session_state['nirappugaa_started']:
-        st.write("சரி, நிரப்புக பயிற்சியை தொடங்குவோம். பயிற்சியை தொடங்க 'தொடங்கு' பொத்தானைக் கிளிக் செய்யவும்.")
-        st.button("தொடங்கு", key='nirappugaa_start_btn', on_click=start_nirappugaa)
+        st.markdown(
+    "<p style='text-align: center;'>நிரப்புக பயிற்சியை தொடங்குவோம். பயிற்சியை தொடங்க 'தொடங்கு' பொத்தானை அழுத்தவும்.</p>",
+    unsafe_allow_html=True
+)
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.button("தொடங்கு", key='nirappugaa_start_btn', on_click=start_nirappugaa)
     else:
         passage = st.session_state['nirappugaa_exercise']['passage']
         blanks = st.session_state['nirappugaa_exercise']['blanks']
+        options = st.session_state['nirappugaa_exercise']['options']
+        
         st.write("### பகுதி:")
         st.write(passage)
         
-        # Input fields for blanks
+        # Input fields for blanks with options
         st.write("### குறைவுகள் நிரப்பவும்:")
         user_answers = []
         for idx in range(len(blanks)):
-            user_answer = st.text_input(f"பகுதி {idx+1}", key=f'nirappugaa_answer_{idx}')
+            user_answer = st.selectbox(
+                f"பகுதி {idx+1} - சரியான விடையை தேர்வு செய்யவும்:",
+                options=["------பதில் தேர்ந்தெடுக்கவும்------"] + options,
+                key=f'nirappugaa_answer_{idx}'
+            )
             user_answers.append(user_answer)
         
         # Button to submit answers
@@ -421,7 +460,7 @@ elif mode == "நிரப்புக (Nirappug)":
             # Pass the answers through content moderation
             inappropriate = False
             for answer in user_answers:
-                if moderate_content(answer):
+                if moderate_content(answer) and answer != "பதில் தேர்ந்தெடுக்கவும்":
                     inappropriate = True
                     break
             if inappropriate:
@@ -438,15 +477,15 @@ elif mode == "நிரப்புக (Nirappug)":
                     )
                     st.session_state['exercise_feedback'] = feedback
                 st.session_state['is_processing'] = False
+        
         # Display feedback
         if st.session_state['exercise_feedback']:
             st.write("### மதிப்பாய்வு:")
             st.write(st.session_state['exercise_feedback'])
             if st.button("புதிய பயிற்சி", key='nirappugaa_new_exercise_btn'):
                 reset_nirappug_session()
-    
 
-elif mode == "விரிவாக (Virivaaga)":
+elif mode == "விரிவாக":
     # Virivaaga Mode Implementation
     st.session_state['selected_option'] = 'virivaaga'
 
@@ -544,7 +583,7 @@ elif mode == "விரிவாக (Virivaaga)":
         st.markdown(f"<div class='chat-message assistant-message'>{st.session_state['main_answer']}</div>", unsafe_allow_html=True)
         st.markdown("<p>மேலும் அறிய 'மேலும் கூரு' பொத்தானைக் கிளிக் செய்யவும் அல்லது உங்கள் கேள்வியை உள்ளீடு செய்து அனுப்பவும்.</p>", unsafe_allow_html=True)
 
-        if mode == "விரிவாக (Virivaaga)":
+        if mode == "விரிவாக":
             # Create a container for the buttons to keep them aligned
             with st.container():
                 # Create two columns for the action buttons
@@ -607,7 +646,7 @@ elif mode == "விரிவாக (Virivaaga)":
     #                 st.markdown("<div class='separator'>----------------</div>", unsafe_allow_html=True)
     #         st.markdown("</div>", unsafe_allow_html=True)
 
-elif mode == "தமிழ் உதவி (Tamil Udhavi)":
+elif mode == "தமிழ் பயிற்சி":
     # Handle the "Tamil Udhavi (Tamil Assistance)" mode
     # **Important:** Do NOT reset 'selected_option' here. It should be managed only during mode change.
     # st.session_state['selected_option'] = None  # <-- Remove this line

@@ -17,10 +17,12 @@ Generate a child-friendly passage in Tamil suitable for a 9-year-old child. The 
 The passage must use only pure Tamil words, avoiding any English-based words.
 
 Select 2 to 3 important words from the passage that are appropriate to be turned into blanks for a fill-in-the-blanks exercise. Replace these words in the passage with blanks like "_________________________".
-The words can be nouns, adjectives, or verbs but not proper nouns.
+The words can be nouns, adjectives, or verbs but not proper nouns. 
 
 After the passage, provide a list of strong clues that will help the child figure out each blank. The clues should be simple, clear, and suitable for a 9-year-old to understand. Each clue should be meaningful enough to make it easy for the child to identify the correct word.
-The clues can have multiple sentences for each blank giving more context to the blank.
+The clues can have multiple sentences for each blank giving more context to the blank. 
+
+Finally, give 6 to 8 different words which include the answers for the blanks and other words from which the kid can choose the right options. The correct answers should be randomized within the options.
 
 Provide the output in the following format:
 
@@ -32,6 +34,9 @@ Blanks:
 2. The actual word for blank 2
 ...
 
+Options:
+Option1, Option2, Option3, ...
+
 Clues:
 1. Clue for blank 1
 2. Clue for blank 2
@@ -42,15 +47,17 @@ Clues:
     # Debug: Print the raw LLM response to inspect
     print("LLM Response:", response)
 
-    # Parse the response to extract the passage, blanks, and clues
+    # Parse the response to extract the passage, blanks, clues, and options
     lines = response.strip().split('\n')
     passage_lines = []
     blanks = []
     clues = []
+    options = []
 
     is_passage = False
     is_blanks = False
     is_clues = False
+    is_options = False
 
     for line in lines:
         line = line.strip()
@@ -60,16 +67,25 @@ Clues:
             is_passage = True
             is_blanks = False
             is_clues = False
+            is_options = False
             continue
         elif line.lower().startswith('blanks:'):
             is_passage = False
             is_blanks = True
             is_clues = False
+            is_options = False
+            continue
+        elif line.lower().startswith('options:'):
+            is_passage = False
+            is_blanks = False
+            is_clues = False
+            is_options = True
             continue
         elif line.lower().startswith('clues:'):
             is_passage = False
             is_blanks = False
             is_clues = True
+            is_options = False
             continue
 
         if is_passage:
@@ -80,8 +96,10 @@ Clues:
                 blanks.append(line.split('.', 1)[1].strip())
             except IndexError:
                 print(f"Error parsing blank: {line}")  # Debug information for parsing issue
+        elif is_options:
+            # Split options by commas
+            options = [opt.strip() for opt in line.split(',')]
         elif is_clues and '.' in line:
-            # Split by first occurrence of '.' and extract the clue
             try:
                 clues.append(line.split('.', 1)[1].strip())
             except IndexError:
@@ -89,18 +107,19 @@ Clues:
 
     passage = '\n'.join(passage_lines).strip()
 
-    # Ensure that all components (passage, blanks, and clues) are generated properly
-    if not passage or len(blanks) < 2 or len(clues) < 2:
+    # Ensure that all components (passage, blanks, clues, options) are generated properly
+    if not passage or len(blanks) < 2 or len(clues) < 2 or len(options) < 6:
         # Debug: Print the components for inspection if the ValueError is triggered
         print("Passage Generated:", passage)
         print("Blanks Generated:", blanks)
         print("Clues Generated:", clues)
-        raise ValueError("The passage, blanks, or clues were not generated correctly. Please check the prompt or parsing logic.")
+        print("Options Generated:", options)
+        raise ValueError("The passage, blanks, clues, or options were not generated correctly. Please check the prompt or parsing logic.")
 
-    # Construct the full exercise with passage and clues for display to the child
-    full_exercise = f"{passage}\n\nகுறிப்புகள்:\n" + "\n".join([f"{idx+1}. {clue}" for idx, clue in enumerate(clues)])
+    # Construct the full exercise with passage, clues, and options for display to the child
+    full_exercise = f"{passage}\n\nகுறிப்புகள்:\n" + "\n".join([f"{idx+1}. {clue}" for idx, clue in enumerate(clues)]) + "\n\nவிருப்பங்கள்:\n" + ", ".join(options)
 
-    return {'passage': full_exercise, 'blanks': blanks}
+    return {'passage': full_exercise, 'blanks': blanks, 'options': options}
 
 def validate_nirappugaa_answers(passage, blanks, user_answers, api_key):
     """
