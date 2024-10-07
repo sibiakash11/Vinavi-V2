@@ -248,6 +248,8 @@ Is the user input inappropriate for a 9-year-old child? (Yes/No):
 def autoplay_audio(text):
     # Remove '**' used for bold text
     cleaned_text = text.replace('**', '')
+    cleaned_text = cleaned_text.replace('__', '')
+
 
     # Convert the cleaned text to speech
     tts = gTTS(cleaned_text, lang='ta')
@@ -267,7 +269,7 @@ def autoplay_audio(text):
 
 # Mode-specific handling
 if mode == "கருத்தறிதல் பயிற்சி":
-# Mode-specific handling
+    # Mode-specific handling
 
     # Function to reset Karutharithal session state
     def reset_karutharithal_session():
@@ -290,22 +292,20 @@ if mode == "கருத்தறிதல் பயிற்சி":
                 st.session_state['karutharithal_exercise'] = exercise
                 st.session_state['karutharithal_started'] = True
         except ValueError as e:
-            #st.error(str(e))
             # Reset the session state to initial state
             reset_karutharithal_session()
             st.stop()  # Stop further execution to re-render the page
         except Exception as e:
-            st.error(f"பயிற்சி தயாரிப்பதில் ஒரு பிழை ஏற்பட்டது: {str(e)}")
+           # st.error(f"பயிற்சி தயாரிப்பதில் ஒரு பிழை ஏற்பட்டது: {str(e)}")
             # Reset the session state to initial state
             reset_karutharithal_session()
             st.stop()
 
     if not st.session_state['karutharithal_started']:
-     
         st.markdown(
-    "<p style='text-align: center;'>கருத்தறிதல் பயிற்சியை தொடங்குவோம். பயிற்சியை தொடங்க 'தொடங்கு' பொத்தானை அழுத்தவும்.</p>",
-    unsafe_allow_html=True
-)
+            "<p style='text-align: center;'>கருத்தறிதல் பயிற்சியை தொடங்குவோம். பயிற்சியை தொடங்க 'தொடங்கு' பொத்தானை அழுத்தவும்.</p>",
+            unsafe_allow_html=True
+        )
         
         # Center the "தொடங்கு" button using columns
         col1, col2, col3 = st.columns([1, 2, 1])
@@ -320,13 +320,20 @@ if mode == "கருத்தறிதல் பயிற்சி":
             if not passage or not questions:
                 raise ValueError("பகுதி அல்லது கேள்விகள் காலியாக உள்ளன. தயவுசெய்து மீண்டும் முயற்சிக்கவும்.")
         except (KeyError, TypeError, ValueError) as e:
-            st.error(str(e))
+           # st.error(str(e))
             # Reset the session state to initial state
             reset_karutharithal_session()
             st.stop()  # Stop further execution to re-render the page
         
         st.write("### படிப்பு:")
         st.write(passage)
+
+        # Add a "வாசிக்க" (Read Aloud) button below the "படிப்பு" section
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            if st.button("வாசிக்க", key='karutharithal_read_aloud_btn'):
+                autoplay_audio(passage)
+
         st.write("### கேள்விகள்:")
         for idx, question in enumerate(questions):
             st.write(f"{idx+1}. {question}")
@@ -334,7 +341,7 @@ if mode == "கருத்தறிதல் பயிற்சி":
         st.write("### உங்கள் பதில்கள்:")
         user_answers = []
         for idx in range(len(questions)):
-    # Text input first, then mic button next to it
+            # Text input first, then mic button next to it
             input_col, mic_col = st.columns([5, 1])  # Input column first, then mic
     
             with mic_col:
@@ -347,7 +354,6 @@ if mode == "கருத்தறிதல் பயிற்சி":
                 )
                 if tamil_text:
                     st.session_state[f'karutharithal_temp_answer_{idx}'] = tamil_text  # Store in temporary state
-            
             
             with input_col:
                 user_answer = st.text_input(
@@ -389,12 +395,20 @@ if mode == "கருத்தறிதல் பயிற்சி":
         if st.session_state['exercise_feedback']:
             st.write("### மதிப்பாய்வு:")
             st.write(st.session_state['exercise_feedback'])
+        
+          # Add a "வாசிக்க" (Read Aloud) button below the "படிப்பு" section
+            col1, col2, col3 = st.columns([1, 2, 1])
+            with col2:
+                if st.button("வாசிக்க", key='karutharithal_answer_read_aloud_btn'):
+                    autoplay_audio(st.session_state['exercise_feedback'])
 
         # Reset button to restart the exercise
         st.write("")
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             st.button("புதிய பயிற்சி", key=f'karutharithal_new_exercise_btn_{st.session_state["karutharithal_started"]}', on_click=reset_karutharithal_session)
+
+
 
 elif mode == "நிரப்புக பயிற்சி":
     # Function to reset Nirappug session state
@@ -421,7 +435,7 @@ elif mode == "நிரப்புக பயிற்சி":
             #st.error(str(e))
             reset_nirappug_session()
         except Exception as e:
-            st.error(f"பயிற்சி தயாரிப்பதில் ஒரு பிழை ஏற்பட்டது: {str(e)}")
+            #st.error(f"பயிற்சி தயாரிப்பதில் ஒரு பிழை ஏற்பட்டது: {str(e)}")
             reset_nirappug_session()
 
     if not st.session_state['nirappugaa_started']:
@@ -439,6 +453,13 @@ elif mode == "நிரப்புக பயிற்சி":
         
         st.write("### பகுதி:")
         st.write(passage)
+        
+        
+        # Add a "வாசிக்க" (Read Aloud) button below the "படிப்பு" section
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            if st.button("வாசிக்க", key='nirapuga_read_aloud_btn'):
+                autoplay_audio(passage)
         
         # Input fields for blanks with options
         st.write("### குறைவுகள் நிரப்பவும்:")
@@ -648,12 +669,10 @@ elif mode == "விரிவாக":
 
 elif mode == "தமிழ் பயிற்சி":
     # Handle the "Tamil Udhavi (Tamil Assistance)" mode
-    # **Important:** Do NOT reset 'selected_option' here. It should be managed only during mode change.
-    # st.session_state['selected_option'] = None  # <-- Remove this line
 
     # Display input bar first
     st.markdown('<div class="input-row">', unsafe_allow_html=True)
-    input_col, mic_col = st.columns([5, 1]) 
+    input_col, mic_col = st.columns([5, 1])
     with mic_col:
         tamil_text = speech_to_text(
             language='ta-IN',
@@ -672,7 +691,6 @@ elif mode == "தமிழ் பயிற்சி":
             disabled=st.session_state['is_processing']
         )
 
-
     st.markdown('</div>', unsafe_allow_html=True)
 
     # Display options buttons below the input bar
@@ -684,73 +702,49 @@ elif mode == "தமிழ் பயிற்சி":
     button_cols = st.columns(len(button_labels))
     for idx, (col, label, key) in enumerate(zip(button_cols, button_labels, button_keys)):
         with col:
-            button_clicked = st.button(label, key=f'tamil_udhavi_{key}')
-            if button_clicked:
+            button_clicked = st.button(label, key=f'tamil_udhavi_{key}', disabled=st.session_state['is_processing'])
+            if button_clicked and user_input:
+                st.session_state['is_processing'] = True
+                # Append to messages for user input
+                st.session_state['messages'].append({"role": "user", "content": user_input})
                 st.session_state['selected_option'] = key
 
-            # Apply CSS styling to buttons
-            st.markdown(f"""
-                <style>
-                    div[data-testid="stButton"] > button[data-baseweb="button"][key="tamil_udhavi_{key}"] {{
-                        background-color: {'#007bff' if key == st.session_state.get('selected_option') else '#f0f0f0'};
-                        color: {'white' if key == st.session_state.get('selected_option') else 'black'};
-                        width: 100%;
-                        height: 60px;
-                        font-size: 16px;
-                        border-radius: 8px;
-                    }}
-                </style>
-            """, unsafe_allow_html=True)
-
-    # Submit button centered below options
-    st.write("")
-    submit_col = st.columns([1, 2, 1])
-    with submit_col[1]:
-        submit_button = st.button('அனுப்பவும்', key='tamil_udhavi_submit_btn', disabled=st.session_state['is_processing'])
-
-    # Processing logic
-    if submit_button and user_input and st.session_state.get('selected_option'):
-        st.session_state['is_processing'] = True
-        # Append to messages only for Tamil Udhavi
-        st.session_state['messages'].append({"role": "user", "content": user_input})
-        selected_option = st.session_state['selected_option']
-
-        # Check for inappropriate content
-        with st.spinner("சரிபார்க்கிறது..."):
-            if moderate_content(user_input):
-                predefined_response = "மன்னிக்கவும், நான் அந்த கேள்விக்கு பதில் அளிக்க முடியாது."
-                st.session_state['messages'].append({"role": "assistant", "content": predefined_response})
-                st.session_state['last_answer'] = predefined_response
-                st.error(predefined_response)
-            else:
-                with st.spinner("சிந்திக்கிறது..."):
-                    if selected_option == 'meaning':
-                        qa_chain = setup_rag_pipeline_meaning()
-                        result = qa_chain({"query": user_input})
-                        answer = result['result']
-                    elif selected_option == 'example':
-                        qa_chain = setup_rag_pipeline_example()
-                        result = qa_chain({"query": user_input})
-                        answer = result['result']
-                    elif selected_option == 'translation':
-                        translation_chain = setup_translation_chain()
-                        answer = translation_chain.run(question=user_input)
+                # Check for inappropriate content
+                with st.spinner("சரிபார்க்கிறது..."):
+                    if moderate_content(user_input):
+                        predefined_response = "மன்னிக்கவும், நான் அந்த கேள்விக்கு பதில் அளிக்க முடியாது."
+                        st.session_state['messages'].append({"role": "assistant", "content": predefined_response})
+                        st.session_state['last_answer'] = predefined_response
+                        st.error(predefined_response)
                     else:
-                        st.error("தவறான விருப்பம் தேர்ந்தெடுக்கப்பட்டது.")
-                        st.stop()
+                        with st.spinner("சிந்திக்கிறது..."):
+                            if key == 'meaning':
+                                qa_chain = setup_rag_pipeline_meaning()
+                                result = qa_chain({"query": user_input})
+                                answer = result['result']
+                            elif key == 'example':
+                                qa_chain = setup_rag_pipeline_example()
+                                result = qa_chain({"query": user_input})
+                                answer = result['result']
+                            elif key == 'translation':
+                                translation_chain = setup_translation_chain()
+                                answer = translation_chain.run(question=user_input)
+                            else:
+                                st.error("தவறான விருப்பம் தேர்ந்தெடுக்கப்பட்டது.")
+                                st.stop()
 
-                    # Append the assistant's answer to messages
-                    st.session_state['messages'].append({"role": "assistant", "content": answer})
-                    st.session_state['last_answer'] = answer
+                            # Append the assistant's answer to messages
+                            st.session_state['messages'].append({"role": "assistant", "content": answer})
+                            st.session_state['last_answer'] = answer
 
-        st.session_state['input_placeholder'] = ''  # Reset input after processing
-        st.session_state['is_processing'] = False
+                st.session_state['input_placeholder'] = ''  # Reset input after processing
+                st.session_state['is_processing'] = False
 
     # Display assistant's answer
     if st.session_state['last_answer']:
         st.write("## உதவியாளர் பதில்")
         st.markdown(f"<div class='chat-message assistant-message'>{st.session_state['last_answer']}</div>", unsafe_allow_html=True)
-        
+
         # For Tamil Udhavi mode, only display the "வாசிக்க" button
         if st.button("வாசிக்க", key='tamil_udhavi_read_aloud_btn', disabled=st.session_state['is_processing']):
             autoplay_audio(st.session_state['last_answer'])

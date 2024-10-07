@@ -16,30 +16,28 @@ Generate a child-friendly passage in Tamil suitable for a 9-year-old child. The 
 
 The passage must use only pure Tamil words, avoiding any English-based words.
 
-Select 2 to 3 important words from the passage that are appropriate to be turned into blanks for a fill-in-the-blanks exercise. Replace these words in the passage with blanks like "_________________________".
-The words can be nouns, adjectives, or verbs but not proper nouns. 
+Select 3 important words from the passage that are appropriate to be turned into blanks for a fill-in-the-blanks exercise. Replace these words in the passage with "_________________________".
+The words should be **nouns, adjectives, or verbs** (but not proper nouns). The selected words should be **crucial to the overall meaning of the passage**.
 
-After the passage, provide a list of strong clues that will help the child figure out each blank. The clues should be simple, clear, and suitable for a 9-year-old to understand. Each clue should be meaningful enough to make it easy for the child to identify the correct word.
-The clues can have multiple sentences for each blank giving more context to the blank. 
+For each blank, provide a **clue** that will help a 9-year-old child identify the correct word. The clue should be **simple, contain 2 sentences**, and directly relate to the context of the blank word.
 
-Finally, give 6 to 8 different words which include the answers for the blanks and other words from which the kid can choose the right options. The correct answers should be randomized within the options.
+Provide 6 different words as **options**, including the correct answers for the blanks. Ensure that the **correct answers are randomized** among the options.
 
-Provide the output in the following format:
-
+**Format**:
 Passage:
 [Your passage with blanks]
 
 Blanks:
-1. The actual word for blank 1
-2. The actual word for blank 2
+1. [Actual word for blank 1]
+2. [Actual word for blank 2]
 ...
 
 Options:
 Option1, Option2, Option3, ...
 
 Clues:
-1. Clue for blank 1
-2. Clue for blank 2
+1. [Clue for blank 1]
+2. [Clue for blank 2]
 ...
 """
     response = llm.predict(prompt)
@@ -121,34 +119,15 @@ Clues:
 
     return {'passage': full_exercise, 'blanks': blanks, 'options': options}
 
-def validate_nirappugaa_answers(passage, blanks, user_answers, api_key):
+def validate_nirappugaa_answers(passage, blanks, user_answers, options):
     """
     Validate the user's answers for the blanks and provide detailed feedback.
     """
     feedback = ''
     for idx, (correct_word, user_answer) in enumerate(zip(blanks, user_answers)):
-        prompt = f"""
-You are a helpful assistant proficient in Tamil.
-
-A child has attempted to fill in the blank number {idx+1} in the following passage:
-
-Passage:
-{passage}
-
-Child's Answer for Blank {idx+1}:
-{user_answer}
-
-First, determine if the child's answer is correct based on the context of the passage. The answer is correct even if it is a synonym of the respective blank word. If it is correct, respond: "சரி! உங்கள் பதில் சரியானது." Then, provide a brief explanation reinforcing why the answer is correct.
-
-If the answer is incorrect, respond: "தவறு. உங்கள் பதில் சரியானதல்ல." Then, explain what the correct word is, why it is the correct choice in this context, and provide a simplified version of the clue to help the child understand.
-
-Provide your response in Tamil.
-"""
-        llm = ChatOpenAI(
-            model_name="gpt-4o",
-            temperature=0.7,
-            openai_api_key=api_key
-        )
-        response = llm.predict(prompt)
-        feedback += f"பகுதி {idx+1}:\n{response.strip()}\n\n"
+        if user_answer == correct_word:
+            feedback += f"பகுதி {idx+1}: சரி! உங்கள் பதில் சரியானது. '{correct_word}' என்பது சரியான பதில்.\n\n"
+        else:
+            feedback += f"பகுதி {idx+1}: தவறு. உங்கள் பதில் சரியானதல்ல. சரியான பதில் '{correct_word}' ஆகும். தயவுசெய்து குறிப்பு பார்க்கவும்: '{options[idx]}'.\n\n"
+    
     return feedback.strip()
