@@ -426,9 +426,9 @@ elif mode == "நிரப்புக பயிற்சி":
         try:
             with st.spinner("பயிற்சி தயாராகிறது..."):
                 exercise = generate_nirappugaa_exercise(api_key)
-                # Check if exercise has non-empty passage and blanks
-                if not exercise.get('passage') or not exercise.get('blanks'):
-                    raise ValueError("பகுதி அல்லது குறைவுகள் காலியாக உள்ளன. தயவுசெய்து மீண்டும் முயற்சிக்கவும்.")
+                # Check if exercise has non-empty passage, blanks, and options
+                if not exercise.get('passage') or not exercise.get('blanks') or not exercise.get('options'):
+                    raise ValueError("பகுதி, குறைவுகள், அல்லது விருப்பங்கள் காலியாக உள்ளன. தயவுசெய்து மீண்டும் முயற்சிக்கவும்.")
                 st.session_state['nirappugaa_exercise'] = exercise
                 st.session_state['nirappugaa_started'] = True
         except ValueError as e:
@@ -438,73 +438,83 @@ elif mode == "நிரப்புக பயிற்சி":
             #st.error(f"பயிற்சி தயாரிப்பதில் ஒரு பிழை ஏற்பட்டது: {str(e)}")
             reset_nirappug_session()
 
-    if not st.session_state['nirappugaa_started']:
+    if not st.session_state.get('nirappugaa_started'):
         st.markdown(
-    "<p style='text-align: center;'>நிரப்புக பயிற்சியை தொடங்குவோம். பயிற்சியை தொடங்க 'தொடங்கு' பொத்தானை அழுத்தவும்.</p>",
-    unsafe_allow_html=True
-)
+            "<p style='text-align: center;'>நிரப்புக பயிற்சியை தொடங்குவோம். பயிற்சியை தொடங்க 'தொடங்கு' பொத்தானை அழுத்தவும்.</p>",
+            unsafe_allow_html=True
+        )
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             st.button("தொடங்கு", key='nirappugaa_start_btn', on_click=start_nirappugaa)
     else:
-        passage = st.session_state['nirappugaa_exercise']['passage']
-        blanks = st.session_state['nirappugaa_exercise']['blanks']
-        options = st.session_state['nirappugaa_exercise']['options']
-        
-        st.write("### பகுதி:")
-        st.write(passage)
-        
-        
-        # Add a "வாசிக்க" (Read Aloud) button below the "படிப்பு" section
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            if st.button("வாசிக்க", key='nirapuga_read_aloud_btn'):
-                autoplay_audio(passage)
-        
-        # Input fields for blanks with options
-        st.write("### குறைவுகள் நிரப்பவும்:")
-        user_answers = []
-        for idx in range(len(blanks)):
-            user_answer = st.selectbox(
-                f"பகுதி {idx+1} - சரியான விடையை தேர்வு செய்யவும்:",
-                options=["------பதில் தேர்ந்தெடுக்கவும்------"] + options,
-                key=f'nirappugaa_answer_{idx}'
-            )
-            user_answers.append(user_answer)
-        
-        # Button to submit answers
-        if st.button("பதில்கள் அனுப்பவும்", key='nirappugaa_submit_btn'):
-            # Validate the answers
-            st.session_state['is_processing'] = True
-            # Collect the answers
-            st.session_state['user_answers'] = user_answers
-            # Pass the answers through content moderation
-            inappropriate = False
-            for answer in user_answers:
-                if moderate_content(answer) and answer != "பதில் தேர்ந்தெடுக்கவும்":
-                    inappropriate = True
-                    break
-            if inappropriate:
-                st.error("உங்கள் பதில்களில் தவறான அல்லது பொருத்தமற்ற உள்ளடக்கம் உள்ளது. தயவுசெய்து சரிசெய்து மீண்டும் முயற்சிக்கவும்.")
-                st.session_state['is_processing'] = False
-            else:
-                with st.spinner("உங்கள் பதில்கள் மதிப்பாய்வு செய்யப்படுகின்றன..."):
-                    # Validate the answers
-                    feedback = validate_nirappugaa_answers(
-                        passage,
-                        blanks,
-                        st.session_state['user_answers'],
-                        api_key
-                    )
-                    st.session_state['exercise_feedback'] = feedback
-                st.session_state['is_processing'] = False
-        
-        # Display feedback
-        if st.session_state['exercise_feedback']:
-            st.write("### மதிப்பாய்வு:")
-            st.write(st.session_state['exercise_feedback'])
-            if st.button("புதிய பயிற்சி", key='nirappugaa_new_exercise_btn'):
+        # Check if the session state has the required data to avoid KeyError
+        if 'nirappugaa_exercise' in st.session_state:
+            exercise = st.session_state['nirappugaa_exercise']
+            passage = exercise.get('passage', '')
+            blanks = exercise.get('blanks', [])
+            options = exercise.get('options', [])
+
+            if not passage or not blanks or not options:
+                #st.error("பயிற்சி தரவுகள் சரியாக இல்லை. மீண்டும் முயற்சிக்கவும்.")
                 reset_nirappug_session()
+            else:
+                st.write("### பகுதி:")
+                st.write(passage)
+
+                # Add a "வாசிக்க" (Read Aloud) button below the "படிப்பு" section
+                col1, col2, col3 = st.columns([1, 2, 1])
+                with col2:
+                    if st.button("வாசிக்க", key='nirapuga_read_aloud_btn'):
+                        autoplay_audio(passage)
+
+                # Input fields for blanks with options
+                st.write("### குறைவுகள் நிரப்பவும்:")
+                user_answers = []
+                for idx in range(len(blanks)):
+                    user_answer = st.selectbox(
+                        f"பகுதி {idx + 1} - சரியான விடையை தேர்வு செய்யவும்:",
+                        options=["------பதில் தேர்ந்தெடுக்கவும்------"] + options,
+                        key=f'nirappugaa_answer_{idx}'
+                    )
+                    user_answers.append(user_answer)
+
+                # Button to submit answers
+                if st.button("பதில்கள் அனுப்பவும்", key='nirappugaa_submit_btn'):
+                    # Validate the answers
+                    st.session_state['is_processing'] = True
+                    # Collect the answers
+                    st.session_state['user_answers'] = user_answers
+                    # Pass the answers through content moderation
+                    inappropriate = False
+                    for answer in user_answers:
+                        if moderate_content(answer) and answer != "பதில் தேர்ந்தெடுக்கவும்":
+                            inappropriate = True
+                            break
+                    if inappropriate:
+                        st.error("உங்கள் பதில்களில் தவறான அல்லது பொருத்தமற்ற உள்ளடக்கம் உள்ளது. தயவுசெய்து சரிசெய்து மீண்டும் முயற்சிக்கவும்.")
+                        st.session_state['is_processing'] = False
+                    else:
+                        with st.spinner("உங்கள் பதில்கள் மதிப்பாய்வு செய்யப்படுகின்றன..."):
+                            # Validate the answers
+                            feedback = validate_nirappugaa_answers(
+                                passage,
+                                blanks,
+                                st.session_state['user_answers'],
+                                api_key
+                            )
+                            st.session_state['exercise_feedback'] = feedback
+                        st.session_state['is_processing'] = False
+
+                # Display feedback
+                if st.session_state['exercise_feedback']:
+                    st.write("### மதிப்பாய்வு:")
+                    st.write(st.session_state['exercise_feedback'])
+                    if st.button("புதிய பயிற்சி", key='nirappugaa_new_exercise_btn'):
+                        reset_nirappug_session()
+        else:
+            st.error("பயிற்சி தரவுகள் காணப்படவில்லை. தயவுசெய்து மீண்டும் தொடங்கவும்.")
+            reset_nirappug_session()
+
 
 elif mode == "விரிவாக":
     # Virivaaga Mode Implementation
