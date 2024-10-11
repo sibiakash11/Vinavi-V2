@@ -17,6 +17,12 @@ from module_nirapuga import validate_nirappugaa_answers, generate_nirappugaa_exe
 from module_kurippu_eludhuthal import setup_rag_pipeline_kurippu_eludhuthal
 from module_karutharithal import validate_karutharithal_answers, generate_karutharithal_exercise
 from expand_further import setup_expand_further_chain  # Import the expand further module
+from module_essay_writing import (
+    reset_essay_session,
+    generate_brainstorming_qna,
+    generate_essay_structure,
+    get_essay_feedback,
+)
 
 # Set page configuration with wide layout
 st.set_page_config(page_title="Tamil Kids Companion", page_icon="📝", layout='wide')
@@ -158,6 +164,30 @@ if 'user_answers' not in st.session_state:
 if 'exercise_feedback' not in st.session_state:
     st.session_state['exercise_feedback'] = ''  # To store feedback after validation
 
+# Essay Writing Mode Variables
+if 'essay_step' not in st.session_state:
+    st.session_state['essay_step'] = 0  # To track the current step
+
+if 'essay_title' not in st.session_state:
+    st.session_state['essay_title'] = ''
+
+if 'brainstorming_qna' not in st.session_state:
+    st.session_state['brainstorming_qna'] = ''
+
+if 'essay_structure' not in st.session_state:
+    st.session_state['essay_structure'] = ''
+
+if 'essay_content' not in st.session_state:
+    st.session_state['essay_content'] = ''
+
+if 'essay_feedback' not in st.session_state:
+    st.session_state['essay_feedback'] = ''
+
+if 'essay_mode_started' not in st.session_state:
+    st.session_state['essay_mode_started'] = False
+
+
+
 # --- Add this block to handle mode change ---
 # Initialize previous mode
 if 'prev_mode' not in st.session_state:
@@ -168,7 +198,7 @@ with st.sidebar:
     st.write("## முறை தேர்ந்தெடுக்கவும் (Select Mode)")
     mode = st.radio(
         "",
-        ("தமிழ் பயிற்சி", "கருத்தறிதல் பயிற்சி", "நிரப்புக பயிற்சி", "விரிவாக"),
+        ("தமிழ் பயிற்சி", "கருத்தறிதல் பயிற்சி", "நிரப்புக பயிற்சி", "விரிவாக","கட்டுரை எழுதுதல் பயிற்சி"),
         disabled=st.session_state['is_processing']
     )
 
@@ -294,12 +324,12 @@ if mode == "கருத்தறிதல் பயிற்சி":
         except ValueError as e:
             # Reset the session state to initial state
             reset_karutharithal_session()
-            st.stop()  # Stop further execution to re-render the page
+            #st.stop()  # Stop further execution to re-render the page
         except Exception as e:
            # st.error(f"பயிற்சி தயாரிப்பதில் ஒரு பிழை ஏற்பட்டது: {str(e)}")
             # Reset the session state to initial state
             reset_karutharithal_session()
-            st.stop()
+            #st.stop()
 
     if not st.session_state['karutharithal_started']:
         st.markdown(
@@ -323,7 +353,7 @@ if mode == "கருத்தறிதல் பயிற்சி":
            # st.error(str(e))
             # Reset the session state to initial state
             reset_karutharithal_session()
-            st.stop()  # Stop further execution to re-render the page
+            #st.stop()  # Stop further execution to re-render the page
         
         st.write("### படிப்பு:")
         st.write(passage)
@@ -408,7 +438,188 @@ if mode == "கருத்தறிதல் பயிற்சி":
         with col2:
             st.button("புதிய பயிற்சி", key=f'karutharithal_new_exercise_btn_{st.session_state["karutharithal_started"]}', on_click=reset_karutharithal_session)
 
+elif mode == "கட்டுரை எழுதுதல் பயிற்சி":
+    # Function to reset Katturai session state
+    def reset_katturai_session():
+        st.session_state['katturai_started'] = False
+        st.session_state['katturai_step'] = 0
+        st.session_state['katturai_title'] = ''
+        st.session_state['brainstorming_qna'] = ''
+        st.session_state['essay_structure'] = ''
+        st.session_state['essay_content'] = ''
+        st.session_state['essay_feedback'] = ''
+        st.session_state['is_processing'] = False
 
+    # Function to navigate steps
+    def navigate_katturai_step(step_change):
+        st.session_state['katturai_step'] += step_change
+        st.rerun()  # Use st.rerun() instead of deprecated st.experimental_rerun()
+
+    # Function to start Katturai exercise
+    def start_katturai():
+        st.session_state['katturai_started'] = True
+        st.session_state['katturai_step'] = 1
+        st.rerun()
+
+    if not st.session_state.get('katturai_started', False):
+        st.markdown(
+            "<p style='text-align: center;'>கட்டுரை பயிற்சியை தொடங்குவோம். 'தொடங்கு' பொத்தானை அழுத்தவும்.</p>",
+            unsafe_allow_html=True
+        )
+        
+        # Center the "தொடங்கு" button using columns
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            if st.button("தொடங்கு", key='katturai_start_btn'):
+                start_katturai()
+    else:
+        # Reset button to restart the exercise
+        if st.button("பயிற்சியை மீட்டமைக்கவும்", key='katturai_reset_btn'):
+            reset_katturai_session()
+            st.rerun()
+        
+        # Back navigation button
+        if st.session_state['katturai_step'] > 1:
+            if st.button("முன்பு செல்ல", key='katturai_back_btn'):
+                navigate_katturai_step(-1)
+
+        if st.session_state['katturai_step'] == 1:
+            st.write("### கட்டுரை தலைப்பு:")
+            # Text input with mic button for essay title
+            input_col, mic_col = st.columns([5, 1])
+            with mic_col:
+                mic_key = 'STT_katturai_title'
+                tamil_text = speech_to_text(
+                    language='ta-IN',
+                    start_prompt="🎤",
+                    stop_prompt="🛑",
+                    key=mic_key
+                )
+                if tamil_text:
+                    st.session_state['katturai_title'] = tamil_text  # Update session state
+
+            with input_col:
+                essay_title = st.text_input(
+                    "தலைப்பை உள்ளிடவும்:",
+                    value=st.session_state.get('katturai_title', '')
+                )
+                st.session_state['katturai_title'] = essay_title
+
+            # Next button
+            if st.button("அடுத்த படி", key='katturai_step1_next_btn') and essay_title:
+                if moderate_content(essay_title):
+                    st.error("தவறான அல்லது பொருத்தமற்ற தலைப்பு. தயவுசெய்து மீண்டும் முயற்சிக்கவும்.")
+                    st.session_state['katturai_title'] = ''
+                else:
+                    st.session_state['is_processing'] = True
+                    st.session_state['katturai_step'] = 2
+                    st.session_state['is_processing'] = False
+                    st.rerun()
+
+        elif st.session_state['katturai_step'] == 2:
+            st.write("### நினைவாற்றல் கேள்விகள்:")
+            if not st.session_state.get('brainstorming_qna'):
+                with st.spinner("நினைவாற்றல் கேள்விகள் உருவாக்கப்படுகிறது..."):
+                    st.session_state['brainstorming_qna'] = generate_brainstorming_qna(
+                        st.session_state['katturai_title'],
+                        api_key
+                    )
+            st.write(st.session_state['brainstorming_qna'])
+
+            # Read-aloud button
+            if st.button("வாசிக்க", key='katturai_brainstorm_read_btn'):
+                autoplay_audio(st.session_state['brainstorming_qna'])
+
+            # Next button
+            if st.button("அடுத்த படி", key='katturai_step2_next_btn'):
+                st.session_state['katturai_step'] = 3
+                st.rerun()
+
+        elif st.session_state['katturai_step'] == 3:
+            st.write("### கட்டுரையின் அமைப்பு:")
+            if not st.session_state.get('essay_structure'):
+                with st.spinner("கட்டுரையின் அமைப்பு உருவாக்கப்படுகிறது..."):
+                    st.session_state['essay_structure'] = generate_essay_structure(
+                        st.session_state['katturai_title'],
+                        st.session_state['brainstorming_qna'],
+                        api_key
+                    )
+            st.write(st.session_state['essay_structure'])
+
+            # Read-aloud button
+            if st.button("வாசிக்க", key='katturai_structure_read_btn'):
+                autoplay_audio(st.session_state['essay_structure'])
+
+            # Next button
+            if st.button("அடுத்த படி", key='katturai_step3_next_btn'):
+                st.session_state['katturai_step'] = 4
+                st.rerun()
+
+        elif st.session_state['katturai_step'] == 4:
+            st.write("### கட்டுரை எழுதுதல்:")
+            st.write("கட்டுரையை 200 வார்த்தைகளுக்குள் எழுதவும். கீழே உள்ள பெட்டியில் உங்கள் கட்டுரையை உள்ளிடவும்.")
+
+            # Text area with mic button for essay content
+            input_col, mic_col = st.columns([5, 1])
+            with mic_col:
+                mic_key = 'STT_essay_content'
+                tamil_text = speech_to_text(
+                    language='ta-IN',
+                    start_prompt="🎤",
+                    stop_prompt="🛑",
+                    key=mic_key
+                )
+                if tamil_text:
+                    st.session_state['essay_content'] = tamil_text  # Update session state
+
+            with input_col:
+                essay_content = st.text_area(
+                    "கட்டுரை:",
+                    value=st.session_state.get('essay_content', ''),
+                    height=200
+                )
+                st.session_state['essay_content'] = essay_content
+
+            # Submit button
+            if st.button("மதிப்பாய்வு செய்ய", key='katturai_submit_btn') and essay_content:
+                if moderate_content(essay_content):
+                    st.error("தவறான அல்லது பொருத்தமற்ற உள்ளடக்கம். தயவுசெய்து மீண்டும் முயற்சிக்கவும்.")
+                    st.session_state['essay_content'] = ''
+                else:
+                    st.session_state['is_processing'] = True
+                    st.session_state['katturai_step'] = 5
+                    st.session_state['is_processing'] = False
+                    st.rerun()
+
+        elif st.session_state['katturai_step'] == 5:
+            st.write("### கட்டுரை மதிப்பாய்வு:")
+            st.write("#### உங்கள் கட்டுரை:")
+            st.write(st.session_state['essay_content'])
+
+            # Read-aloud button for essay
+            if st.button("கட்டுரையை வாசிக்க", key='katturai_essay_read_btn'):
+                autoplay_audio(st.session_state['essay_content'])
+
+            # Get feedback
+            if not st.session_state.get('essay_feedback'):
+                with st.spinner("மதிப்பாய்வு செய்யப்படுகிறது..."):
+                    st.session_state['essay_feedback'] = get_essay_feedback(
+                        st.session_state['essay_content'],
+                        api_key,
+                        st.session_state['brainstorming_qna'],
+                        st.session_state['katturai_title']
+                    )
+            st.write("#### மதிப்பாய்வு:")
+            st.write(st.session_state['essay_feedback'])
+
+            # Read-aloud button for feedback
+            if st.button("மதிப்பாய்வை வாசிக்க", key='katturai_feedback_read_btn'):
+                autoplay_audio(st.session_state['essay_feedback'])
+
+            # Finish button
+            if st.button("முடிக்கவும்", key='katturai_finish_btn'):
+                reset_katturai_session()
+                st.rerun()
 
 elif mode == "நிரப்புக பயிற்சி":
     # Function to reset Nirappug session state
@@ -603,7 +814,7 @@ elif mode == "விரிவாக":
                         st.session_state['melum_kooru_answers'] = []  # Clear any previous melum kooru answers
                     else:
                         st.error("தவறான விருப்பம் தேர்ந்தெடுக்கப்பட்டது.")
-                        st.stop()
+                        #st.stop()
 
         st.session_state['input_placeholder'] = ''  # Reset input after processing
         st.session_state['is_processing'] = False
@@ -741,7 +952,7 @@ elif mode == "தமிழ் பயிற்சி":
                                 answer = translation_chain.run(question=user_input)
                             else:
                                 st.error("தவறான விருப்பம் தேர்ந்தெடுக்கப்பட்டது.")
-                                st.stop()
+                                #st.stop()
 
                             # Append the assistant's answer to messages
                             st.session_state['messages'].append({"role": "assistant", "content": answer})

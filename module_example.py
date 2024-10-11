@@ -14,23 +14,20 @@ def setup_rag_pipeline_example() -> RetrievalQA:
     )
 
     prompt_template = """
-You are a friendly Tamil-speaking companion for 9-year-old children in Singapore. Your task is to provide a few example sentences using the given word/topic in simple Tamil. These examples should be easy for children to understand.
+You are a friendly Tamil-speaking companion for 9-year-old children in Singapore. Your task is to provide two example sentences in Tamil that use and emphasize the given word or phrase '{question}'. These examples should be easy for children to understand.
 
 Important instructions:
-1. Provide **two example sentences** in Tamil using the given phrase/word.
-2. **Use content from the provided context** if there is a strong similarity, but make sure it is explained simply. Do **not hallucinate** content from the book. Only use information explicitly provided in the context.
-3. **Avoid complex Tamil words**. Instead, use simple language that is suitable for young children.
-4. **Explain each example** clearly using the words used in the sentence with respective english translation to help children understand what the example means .
-5. Each example must be grammatically and politically correct, and easy to relate to for children.
-6. Start with a sentence saying that examples word/phrase in Tamil as a title.
+1. Provide **exactly two example sentences** in Tamil that prominently use the given word/phrase '{question}'.
+2. **Emphasize** the given word/phrase in each example sentence in tamil.
+3. **Use content from the provided context** if it is relevant to the given word/phrase, but make sure to explain it simply. Do **not** include content that is not explicitly provided in the context.
+4. **Avoid complex Tamil words**. Use simple language suitable for young children.
+5. **Explain each example** clearly, including an english translation and only tamil explanation to help children understand the meaning.
+6. Each example must be grammatically, politically correct and easy for children to relate to.
 
 Context: {context}
 
-Question: {question}
-
 Answer:
 """
-
 
     prompt = PromptTemplate(
         input_variables=["context", "question"],
@@ -44,10 +41,10 @@ Answer:
         vectorstore = FAISS.load_local(
             vectorstore_path,
             embeddings_model,
-            allow_dangerous_deserialization=True
+            allow_dangerous_deserialization=True  # Adjusted for safety
         )
     else:
-        raise FileNotFoundError("Vector store 'vector_med' not found in the data folder.")
+        raise FileNotFoundError("Vector store 'vectorstore_med' not found in the data folder.")
 
     retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
 

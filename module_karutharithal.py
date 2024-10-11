@@ -16,6 +16,7 @@ def generate_karutharithal_exercise(api_key):
     
     prompt = """
 Generate a child-friendly passage in Tamil suitable for a 9-year-old child. The passage should be approximately 150 words, meaningful, and easy to understand.
+The passage should be completetely grammatically and politically correct.
 The stories should never have direct speech.
 After the passage, create three questions based directly on the passage content. The answers to these questions should be available directly in the passage.
 
@@ -82,7 +83,7 @@ Child's Answer:
 {user_answer}
 
 First, determine if the child's answer is correct based on the passage. Find similarity to the given answer and mark an answer correct if similarity is more than 30 percent. If it is correct, respond: "சரி! உங்கள் பதில் சரியானது." Then, provide a brief explanation reinforcing why the answer is correct.
-
+If there is no answer at all then respond in tamil stating that no answer was entered.
 If the answer is incorrect, respond: "தவறு. உங்கள் பதில் சரியானதல்ல." Then, explain what the correct answer is and why it is correct, referencing the passage.
 
 Provide your response in Tamil.

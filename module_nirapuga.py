@@ -14,10 +14,11 @@ def generate_nirappugaa_exercise(api_key):
     prompt = """
 Generate a child-friendly passage in Tamil suitable for a 9-year-old child. The passage should be approximately 75 words, meaningful, and easy to understand for a 9-year-old kid.
 
-The passage must use only pure Tamil words, avoiding any English-based words.
+The passage must use only pure Tamil words, avoiding any English-based words and should be grammatically, politically correct.
 
 Select 3 important words from the passage that are appropriate to be turned into blanks for a fill-in-the-blanks exercise. Replace these words in the passage with "_________________________".
 The words should be **nouns, adjectives, or verbs** (but not proper nouns). The selected words should be **crucial to the overall meaning of the passage**.
+
 
 For each blank, provide a **clue** that will help a 9-year-old child identify the correct word. The clue should be **simple, contain 2 sentences**, and directly relate to the context of the blank word.
 
