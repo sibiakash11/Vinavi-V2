@@ -116,9 +116,10 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# The API key should be provided as an environment variable
+# # The API key should be provided as an environment variable
 api_key = os.getenv("OPENAI_API_KEY")
 
+# Ensure that the API key is set
 
 # Initialize session state variables
 if 'messages' not in st.session_state:
